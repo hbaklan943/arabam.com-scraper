@@ -3,7 +3,7 @@ Node app that scrapes data from pages of car adverts. Scores cars by price/manuf
 
 - Clone the repository
 ```
-git clone hbaklan943/arabam.com-scraper
+git clone https://github.com/hbaklan943/arabam.com-scraper.git
 ```
 - Install dependencies
 ```
