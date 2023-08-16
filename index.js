@@ -1,11 +1,11 @@
 const puppeteer = require("puppeteer");
 const fs = require("fs");
 
-let pageCount = 50;
+let rangeOfPages = [1, 50];
 let url = `https://www.arabam.com/ikinci-el/otomobil/honda-civic-1-6-i-vtec?page=1`;
 
 async function scrape() {
-  const browser = await puppeteer.launch({ headless: false }); // Change headless value to false for debugging
+  const browser = await puppeteer.launch({ headless: "new" }); // Change headless value to false for debugging
 
   const page = await browser.newPage();
 
@@ -13,7 +13,8 @@ async function scrape() {
     console.log(`Page Console Log: ${message.text()}`);
   });
 
-  let stream = fs.createWriteStream("50_puanli.csv", { flags: "a" });
+  let fileName = "50_pages_scored.csv";
+  let stream = fs.createWriteStream(fileName, { flags: "a" });
   // Define CSV header
   const csvHeader = [
     "Model",
@@ -28,7 +29,7 @@ async function scrape() {
   ];
   stream.write(csvHeader.join(","));
   stream.write("\n");
-  for (let i = 1; i <= pageCount; i++) {
+  for (let i = rangeOfPages[0]; i <= rangeOfPages[1]; i++) {
     try {
       await page.goto(
         `https://www.arabam.com/ikinci-el/otomobil/honda-civic-1-6-i-vtec?page=${i}`
@@ -58,16 +59,15 @@ async function scrape() {
           const ilIlce = columns.pop(); // Remove the last element from the array (Il/Ilce)
           columns.push(ilIlce.replace(/\n/g, "/")); // Replace newline with a slash
           puan =
-            puan +
             Number(columns[3]) * 3 -
             Number(columns[4]) * 3 -
-            Number(columns[6].replace(/[^\d]/g, "")) / 1000;
-          //console.log(puan);
+            Number(columns[6].replace(/[^\d]/g, "")) / 1000; // Generate score
+
           columns.push(puan);
-          console.log(columns.length);
           if (columns.length === 9) {
-            columns = [...columns.slice(0, 5), "--", ...columns.slice(5)];
+            columns = [...columns.slice(0, 5), "--", ...columns.slice(5)]; // Sometimes "Renk" value is missing on table row replace it with "--"
           }
+          console.log(`Saved a row`);
           return columns.slice(1); // Remove the first empty element
         });
       });
@@ -75,13 +75,10 @@ async function scrape() {
       // Create a CSV string
       const csvData = tableData.map((row) => row.join(","));
 
-      // Save CSV to a file
-      fs.writeFileSync("table_data.csv", csvData.join("\n"), "utf-8");
-
       stream.write(csvData.join("\n"));
       stream.write("\n");
 
-      console.log("Table data saved to table_data.csv");
+      console.log(`A page of table data appended to ${fileName}`);
     } catch (error) {
       console.error(error);
     }
